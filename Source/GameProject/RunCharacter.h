@@ -29,10 +29,10 @@ private:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Speed")
-	float MovementSpeed = 400.0f; // Default Speed
+	float MovementSpeed = 500.0f; // Default Speed
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Speed")
-	float SpeedIncreaseAmount = 500.0f; // Increase amount per 10 coins
+	float SpeedIncreaseAmount = 300.0f; // Increase amount per 10 coins
 
 	void IncreaseSpeed();
 
