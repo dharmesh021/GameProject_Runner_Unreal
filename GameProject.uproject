@@ -34,5 +34,8 @@
 			"Name": "AssetThumbnails",
 			"Enabled": true
 		}
+	],
+	"TargetPlatforms": [
+		"Windows"
 	]
 }
