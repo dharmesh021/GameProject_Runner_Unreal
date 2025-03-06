@@ -39,6 +39,7 @@ public:
 	void DodgeObstacle();
 
 	FTimerHandle DodgeTimerHandle;
+	FTimerHandle JumpCooldownHandle;
 
 
 	// Called to bind functionality to input
@@ -47,6 +48,7 @@ public:
 private:
 	float MoveSpeed;
 	bool bIsDodging;
+	bool bCanJump;
 
 
 	//UPROPERTY(VisibleDefaultsOnly)

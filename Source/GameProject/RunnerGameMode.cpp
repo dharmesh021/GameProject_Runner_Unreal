@@ -92,7 +92,7 @@ void ARunnerGameMode::AddCoin()
     OnCoinsCountChanged.Broadcast(TotalCoins);
 
     // Check if the total coins collected is a multiple of 2
-    if (TotalCoins % 2 == 0)
+    if (TotalCoins % 10 == 0)
     {
 
         ARunCharacter* Player = Cast<ARunCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
@@ -112,6 +112,7 @@ void ARunnerGameMode::AddCoin()
 			}
 		}
     }
+
 }
 
 

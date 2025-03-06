@@ -1,147 +1,121 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "AIRunnerCharacter.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
+#include "DrawDebugHelpers.h"
 
 #include "RunnerGameMode.h"
 
-
-
-
-// Sets default values
 // Sets default values
 AAIRunnerCharacter::AAIRunnerCharacter()
 {
     PrimaryActorTick.bCanEverTick = true;
     MoveSpeed = 2000.0f; // Adjust as needed
     bIsDodging = false;
-
-  
+    bCanJump = true; // Cooldown flag for jumping
 }
-    
 
-// Called when the game starts or when spawned
 void AAIRunnerCharacter::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 
     GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
-    GetCharacterMovement()->JumpZVelocity = 600.0f; // Adjust to suit your game
-
-    /*RunGameMode = Cast<ARunnerGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
-
-    check(RunGameMode);*/
+    GetCharacterMovement()->JumpZVelocity = 700.0f;
 
     PlayerStart = Cast<APlayerStart>(UGameplayStatics::GetActorOfClass(GetWorld(), APlayerStart::StaticClass()));
-       
 }
 
-
-// Called every frame
 void AAIRunnerCharacter::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+    Super::Tick(DeltaTime);
 
-	MoveForward();
-	AvoidObstacles();
-
+    MoveForward();
+    AvoidObstacles();
 }
 
 void AAIRunnerCharacter::MoveForward()
 {
-    // Move forward constantly, use MoveSpeed to scale the speed
-    AddMovementInput(GetActorForwardVector(), 1.0f);
-
-    // Set the character movement speed
+    // Move forward constantly
+    AddMovementInput(GetActorForwardVector(), 2.0f);
     GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
 }
-
 
 void AAIRunnerCharacter::AvoidObstacles()
 {
     FVector Start = GetActorLocation();
     FVector ForwardVector = GetActorForwardVector();
-    FVector End = Start + (ForwardVector * 300.0f); // Look ahead 300 units
+    FVector End = Start + (ForwardVector * 50.0f); // Reduced detection range
 
     FHitResult Hit;
     FCollisionQueryParams CollisionParams;
 
-    // Check for obstacles ahead
+   
+
     if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, CollisionParams))
     {
         if (Hit.GetActor())
-        {   
+        {
             float DistanceToObstacle = (Hit.ImpactPoint - GetActorLocation()).Size();
 
-            // If the obstacle is close, decide to dodge 75% of the time
-            if (DistanceToObstacle < 100.0f)
+            // Jump or dodge only if the obstacle is close (200 units instead of 500)
+            if (DistanceToObstacle < 50.0f)
             {
-                float RandomChoice = FMath::RandRange(0.0f, 5.0f); // Randomly decide action
+                float RandomChoice = FMath::RandRange(0.1f, 2.0f);
 
-                if (RandomChoice < 0.10f) // 75% chance to dodge
+                if (RandomChoice < 0.50f) // 50% chance to dodge
                 {
                     DodgeObstacle();
                 }
-                else // 25% chance to jump
+                else // 50% chance to jump
                 {
                     JumpOverObstacle();
                 }
-            }
-            else
-            {
-                // If obstacle is farther, prioritize jumping
-                JumpOverObstacle();
             }
         }
     }
 }
 
-
 void AAIRunnerCharacter::JumpOverObstacle()
 {
-    if (GetCharacterMovement()->IsMovingOnGround()) // Check if AI is grounded before jumping
+    if (bCanJump && GetCharacterMovement()->IsMovingOnGround())
     {
         ACharacter::Jump();
+        bCanJump = false; // Prevent multiple jumps
+
+        // Reset jump ability after 1 second
+        GetWorld()->GetTimerManager().SetTimer(JumpCooldownHandle, [this]() {
+            bCanJump = true;
+            }, 1.0f, false);
     }
 }
 
 void AAIRunnerCharacter::DodgeObstacle()
 {
-    if (!bIsDodging) // Prevent continuous dodging
+    if (!bIsDodging)
     {
         bIsDodging = true;
 
         FVector RightVector = GetActorRightVector();
-        float DodgeDirection = (FMath::RandBool() ? 1.0f : -1.0f); // Randomly dodge left or right
+        float DodgeDirection = (FMath::RandBool() ? 1.0f : -1.0f); // Random left or right dodge
 
-        // Apply dodge movement input
         AddMovementInput(RightVector, DodgeDirection);
 
-        // Set the max walk speed to MoveSpeed while dodging
-        GetCharacterMovement()->MaxWalkSpeed = MoveSpeed * 1.5f; // Optionally, increase speed during dodge
+        // Increase speed slightly while dodging
+        GetCharacterMovement()->MaxWalkSpeed = MoveSpeed * 1.2f;
 
-        // Set a timer to reset dodge state and walk speed after 0.5 seconds
+        // Reset dodge state after 0.5 seconds
         GetWorld()->GetTimerManager().SetTimer(DodgeTimerHandle, [this]() {
             bIsDodging = false;
-            // Reset walk speed back to normal after dodge
             GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
-            }, 0.5f, false); // 0.5 seconds dodge duration
+            }, 0.5f, false);
     }
 }
-
-
-
 
 // Called to bind functionality to input
 void AAIRunnerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
+    Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
-
-
-
